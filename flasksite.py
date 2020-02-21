@@ -6,20 +6,28 @@ from flask import send_from_directory
 
 
 UPLOAD_FOLDER = './FILES'
-ALLOWED_EXTENSIONS = {'txt', 'db', 'xlsx', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
-# ALLOWED_EXTENSIONS = {'txt', 'db', 'xlsx'}
+ALLOWED_EXTENSIONS = {'txt', 'db', 'xlsx'}
 ALLOWED_FOLDERS = {'data', 'backups', 'passwords'}
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # TODO: generate secure key, http://flask.pocoo.org/docs/quickstart/#sessions
 app.config['SECRET_KEY'] = 'SECRET'
+# TODO: generate secure auth token
+app.config['SECRET_TOKEN'] = 'TOKEN'
 
 
 # create all folders
 for folder in ALLOWED_FOLDERS:
     os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], folder), exist_ok=True)
     os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'archive', '%s-archive' % folder), exist_ok=True)
+
+
+def check_token(request):
+    if 'token' not in request.headers:
+        return False
+    request_token = request.headers['token']
+    return app.config['SECRET_TOKEN'] == request_token
 
 
 def get_file_extension(filename):
@@ -36,6 +44,9 @@ def allowed_folder(foldername):
 
 @app.route('/upload/<folder>', methods=['POST'])
 def upload_file(folder):
+    if not check_token(request):
+        print('Auth error')
+        return 'Auth error', 401
     if not allowed_folder(folder):
         print('Bad folder')
         return 'Bad folder', 400
@@ -69,6 +80,9 @@ def upload_file(folder):
 
 @app.route('/download/<folder>/<username>', methods=['GET'])
 def download(folder, username):
+    if not check_token(request):
+        print('Auth error')
+        return 'Auth error', 401
     if not allowed_folder(folder):
         print('Bad folder')
         return 'Bad folder', 400
@@ -86,6 +100,9 @@ def download(folder, username):
 
 @app.route('/exists/<folder>/<username>', methods=['GET'])
 def exists(folder, username):
+    if not check_token(request):
+        print('Auth error')
+        return 'Auth error', 401
     if not allowed_folder(folder):
         print('Bad folder')
         return 'Bad folder', 400
@@ -102,6 +119,9 @@ def exists(folder, username):
 
 @app.route('/', methods=['GET'])
 def root():
+    if not check_token(request):
+        print('Auth error')
+        return 'Auth error', 401
     return '''
     <!doctype html>
     <title>Upload new File</title>
@@ -111,7 +131,6 @@ def root():
       <input type=submit value=Upload>
     </form>
     '''
-
 
 
 if __name__ == "__main__":
