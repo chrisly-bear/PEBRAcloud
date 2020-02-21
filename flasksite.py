@@ -14,6 +14,12 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['SECRET_KEY'] = 'SECRET'
 
 
+# create all folders
+for folder in ALLOWED_FOLDERS:
+    os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], folder), exist_ok=True)
+    os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'archive', '%s-archive' % folder), exist_ok=True)
+
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -45,7 +51,6 @@ def upload_file():
         return 'Bad filename', 400
     if file:
         filename = secure_filename(file.filename)
-        os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], folder), exist_ok=True)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], folder, filename))
         return 'Upload successful', 201
 
