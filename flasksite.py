@@ -1,4 +1,5 @@
 import os
+import json
 from flask import Flask, request
 from werkzeug.utils import secure_filename
 from flask import send_from_directory
@@ -33,12 +34,8 @@ def allowed_folder(foldername):
     return foldername.lower() in ALLOWED_FOLDERS
 
 
-@app.route('/', methods=['POST'])
-def upload_file():
-    if 'folder' not in request.values:
-        print('Missing folder')
-        return 'Missing folder', 400
-    folder = request.values['folder']
+@app.route('/upload/<folder>', methods=['POST'])
+def upload_file(folder):
     if not allowed_folder(folder):
         print('Bad folder')
         return 'Bad folder', 400
@@ -70,22 +67,51 @@ def upload_file():
         return 'Upload successful', 201
 
 
+@app.route('/download/<folder>/<username>', methods=['GET'])
+def download(folder, username):
+    if not allowed_folder(folder):
+        print('Bad folder')
+        return 'Bad folder', 400
+    path = os.path.join(app.config['UPLOAD_FOLDER'], folder)
+    filename = None
+    for file in os.listdir(path):
+        if file.startswith(username):
+            filename = file
+            break
+    if not filename:
+        print('Unknown user')
+        return 'Unknown user', 400
+    return send_from_directory(path, filename)
+
+
+@app.route('/exists/<folder>/<username>', methods=['GET'])
+def exists(folder, username):
+    if not allowed_folder(folder):
+        print('Bad folder')
+        return 'Bad folder', 400
+    path = os.path.join(app.config['UPLOAD_FOLDER'], folder)
+    filename = None
+    for file in os.listdir(path):
+        if file.startswith(username):
+            filename = file
+            break
+    if not filename:
+        return json.dumps({'exists': False})
+    return json.dumps({'exists': True})
+
+
 @app.route('/', methods=['GET'])
 def root():
     return '''
     <!doctype html>
     <title>Upload new File</title>
     <h1>Upload new File</h1>
-    <form action="data" method=post enctype=multipart/form-data>
+    <form action="upload" method=post enctype=multipart/form-data>
       <input type=file name=file>
       <input type=submit value=Upload>
     </form>
     '''
 
-
-@app.route('/files/<filename>', methods=['GET'])
-def download_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
 if __name__ == "__main__":
