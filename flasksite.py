@@ -1,20 +1,38 @@
 import os
 import json
+import sys
 from flask import Flask, request
 from werkzeug.utils import secure_filename
 from flask import send_from_directory
 
+# default parameters, can be overwritten by command line arguments
+PORT = 8000
+UPLOAD_FOLDER = './PEBRAcloud_files'
 
-UPLOAD_FOLDER = './FILES'
+# fixed parameters
 ALLOWED_EXTENSIONS = {'txt', 'db', 'xlsx'}
 ALLOWED_FOLDERS = {'data', 'backups', 'passwords'}
+# TODO: generate secure key, http://flask.pocoo.org/docs/quickstart/#sessions
+SECRET_KEY = 'SECRET'
+# TODO: generate secure auth token
+AUTH_TOKEN = 'TOKEN'
+
+
+dev_mode = "dev" in sys.argv
+for arg in sys.argv:
+    if arg.startswith('port='):
+        PORT=int(arg[5:])
+    if arg.startswith('files='):
+        UPLOAD_FOLDER=arg[6:]
+print("running in development mode" if dev_mode else "running in production mode")
+print("running on port '%s'" % PORT)
+print("storing files in '%s'" % UPLOAD_FOLDER)
+
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-# TODO: generate secure key, http://flask.pocoo.org/docs/quickstart/#sessions
-app.config['SECRET_KEY'] = 'SECRET'
-# TODO: generate secure auth token
-app.config['SECRET_TOKEN'] = 'TOKEN'
+app.config['SECRET_KEY'] = SECRET_KEY
+app.config['AUTH_TOKEN'] = AUTH_TOKEN
 
 
 # create all folders
@@ -27,7 +45,7 @@ def check_token(request):
     if 'token' not in request.headers:
         return False
     request_token = request.headers['token']
-    return app.config['SECRET_TOKEN'] == request_token
+    return app.config['AUTH_TOKEN'] == request_token
 
 
 def get_file_extension(filename):
@@ -134,5 +152,5 @@ def root():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=PORT, debug=dev_mode, use_reloader=dev_mode)
 
