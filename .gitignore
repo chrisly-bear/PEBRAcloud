@@ -105,5 +105,5 @@ dmypy.json
 .pyre/
 
 env/
-FILES/
+PEBRAcloud_files/
 .vscode/settings.json
