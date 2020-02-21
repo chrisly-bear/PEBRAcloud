@@ -5,7 +5,8 @@ from flask import send_from_directory
 
 
 UPLOAD_FOLDER = './FILES'
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'txt', 'db', 'xlsx', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+# ALLOWED_EXTENSIONS = {'txt', 'db', 'xlsx'}
 ALLOWED_FOLDERS = {'data', 'backups', 'passwords'}
 
 app = Flask(__name__)
@@ -20,9 +21,12 @@ for folder in ALLOWED_FOLDERS:
     os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'archive', '%s-archive' % folder), exist_ok=True)
 
 
+def get_file_extension(filename):
+    return filename.rsplit('.', 1)[1].lower()
+
+
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and get_file_extension(filename) in ALLOWED_EXTENSIONS
 
 
 def allowed_folder(foldername):
@@ -51,7 +55,18 @@ def upload_file():
         return 'Bad filename', 400
     if file:
         filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], folder, filename))
+        target_path = os.path.join(app.config['UPLOAD_FOLDER'], folder, filename)
+        # if file already exists, move the exisiting file to the archive folder and add a running number '_X'
+        if os.path.isfile(target_path):
+            file_ext = get_file_extension(filename)
+            filename_no_ext = filename[:-(len(file_ext)+1)]
+            file_version = 1
+            archive_path = os.path.join(app.config['UPLOAD_FOLDER'], 'archive', '%s-archive' % folder, '%s_%s.%s' % (filename_no_ext, file_version, file_ext))
+            while os.path.isfile(archive_path):
+                file_version += 1
+                archive_path = os.path.join(app.config['UPLOAD_FOLDER'], 'archive', '%s-archive' % folder, '%s_%s.%s' % (filename_no_ext, file_version, file_ext))
+            os.rename(target_path, archive_path)
+        file.save(target_path)
         return 'Upload successful', 201
 
 
