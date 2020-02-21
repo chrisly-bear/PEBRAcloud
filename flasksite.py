@@ -137,18 +137,7 @@ def exists(folder, username):
 
 @app.route('/', methods=['GET'])
 def root():
-    if not check_token(request):
-        print('Auth error')
-        return 'Auth error', 401
-    return '''
-    <!doctype html>
-    <title>Upload new File</title>
-    <h1>Upload new File</h1>
-    <form action="upload" method=post enctype=multipart/form-data>
-      <input type=file name=file>
-      <input type=submit value=Upload>
-    </form>
-    '''
+    return "<h1>PEBRAcloud</h1>"
 
 
 if __name__ == "__main__":
