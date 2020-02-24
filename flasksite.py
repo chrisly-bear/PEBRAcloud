@@ -169,16 +169,17 @@ def list_users():
     path = os.path.join(app.config['UPLOAD_FOLDER'], 'backups')
     users = []
     for file in os.listdir(path):
-        filename = file.split('.')[0]  # remove .pb extension
-        split = filename.split('_')
-        username = split[0]
-        firstname = split[1]
-        lastname = split[2]
-        users.append({
-            'username': username,
-            'firstname': firstname,
-            'lastname': lastname
-        })
+        if os.path.isfile(os.path.join(path, file)) and not file.startswith('.'):
+            filename = file.split('.')[0]  # remove .pb extension
+            split = filename.split('_')
+            username = split[0]
+            firstname = split[1]
+            lastname = split[2]
+            users.append({
+                'username': username,
+                'firstname': firstname,
+                'lastname': lastname
+            })
     resp = Response(json.dumps(users))
     resp.headers['Content-Type'] = 'application/json'
     return resp
