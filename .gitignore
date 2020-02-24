@@ -107,3 +107,4 @@ dmypy.json
 env/
 PEBRAcloud_files/
 .vscode/settings.json
+.idea
