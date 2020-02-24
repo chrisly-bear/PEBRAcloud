@@ -41,3 +41,6 @@ python flasksite.py dev
 # store files under /tmp/FILES
 python flasksite.py files=/tmp/FILES
 ```
+
+**IMPORTANT:**
+When deploying the app, use the `run.sh` script to start the app. Running via python is not recommended for production use.
