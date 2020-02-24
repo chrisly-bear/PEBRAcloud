@@ -62,6 +62,10 @@ def allowed_folder(foldername):
 
 @app.route('/upload/<folder>', methods=['POST'])
 def upload_file(folder):
+    """
+    Uploads a file to the given folder. If a file with the same file name exists, it moves the existing one to the
+    archive folder.
+    """
     if not check_token(request):
         print('Auth error')
         return 'Auth error', 401
@@ -98,6 +102,9 @@ def upload_file(folder):
 
 @app.route('/download/<folder>/<username>', methods=['GET'])
 def download(folder, username):
+    """
+    Downloads the file with matching username from the given folder.
+    """
     if not check_token(request):
         print('Auth error')
         return 'Auth error', 401
@@ -118,6 +125,9 @@ def download(folder, username):
 
 @app.route('/exists/<folder>/<username>', methods=['GET'])
 def exists(folder, username):
+    """
+    Checks if a file for the given username exists in the given folder.
+    """
     if not check_token(request):
         print('Auth error')
         return 'Auth error', 401
