@@ -59,6 +59,23 @@ def allowed_folder(foldername):
     return foldername.lower() in ALLOWED_FOLDERS
 
 
+def move_to_archive(folder, filename):
+    """
+    Moves the given file to the archive folder and adds a running number '_X' to it for versioning.
+    """
+    file_ext = get_file_extension(filename)
+    filename_no_ext = filename[:-(len(file_ext) + 1)]
+    file_version = 1
+    source_path = os.path.join(app.config['UPLOAD_FOLDER'], folder, filename)
+    archive_path = os.path.join(app.config['UPLOAD_FOLDER'], 'archive', '%s-archive' % folder,
+                                '%s_%s.%s' % (filename_no_ext, file_version, file_ext))
+    while os.path.isfile(archive_path):
+        file_version += 1
+        archive_path = os.path.join(app.config['UPLOAD_FOLDER'], 'archive', '%s-archive' % folder,
+                                    '%s_%s.%s' % (filename_no_ext, file_version, file_ext))
+    os.rename(source_path, archive_path)
+
+
 @app.route('/upload/<folder>', methods=['POST'])
 def upload_file(folder):
     """
@@ -85,16 +102,9 @@ def upload_file(folder):
     if file:
         filename = secure_filename(file.filename)
         target_path = os.path.join(app.config['UPLOAD_FOLDER'], folder, filename)
-        # if file already exists, move the exisiting file to the archive folder and add a running number '_X'
+        # if file already exists, move the existing file to the archive folder
         if os.path.isfile(target_path):
-            file_ext = get_file_extension(filename)
-            filename_no_ext = filename[:-(len(file_ext)+1)]
-            file_version = 1
-            archive_path = os.path.join(app.config['UPLOAD_FOLDER'], 'archive', '%s-archive' % folder, '%s_%s.%s' % (filename_no_ext, file_version, file_ext))
-            while os.path.isfile(archive_path):
-                file_version += 1
-                archive_path = os.path.join(app.config['UPLOAD_FOLDER'], 'archive', '%s-archive' % folder, '%s_%s.%s' % (filename_no_ext, file_version, file_ext))
-            os.rename(target_path, archive_path)
+            move_to_archive(folder, filename)
         file.save(target_path)
         return 'Upload successful', 201
 
@@ -172,6 +182,30 @@ def list_users():
     resp = Response(json.dumps(users))
     resp.headers['Content-Type'] = 'application/json'
     return resp
+
+
+@app.route('/archive/<folder>/<username>', methods=['POST'])
+def archive_file(folder, username):
+    """
+    Moves the file matching the given username to the archive folder.
+    """
+    if not check_token(request):
+        print('Auth error')
+        return 'Auth error', 401
+    if not allowed_folder(folder):
+        print('Bad folder')
+        return 'Bad folder', 400
+    path = os.path.join(app.config['UPLOAD_FOLDER'], folder)
+    filename = None
+    for file in os.listdir(path):
+        if file.startswith(username):
+            filename = file
+            break
+    if not filename:
+        print('File not found')
+        return 'File not found', 400
+    move_to_archive(folder, filename)
+    return 'Archive successful', 201
 
 
 @app.route('/', methods=['GET'])
