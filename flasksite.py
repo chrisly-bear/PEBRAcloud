@@ -1,9 +1,8 @@
 import os
 import json
 import sys
-from flask import Flask, request
+from flask import Flask, send_from_directory, request, Response
 from werkzeug.utils import secure_filename
-from flask import send_from_directory
 
 # default parameters, can be overwritten by command line arguments
 PORT = 8000
@@ -141,8 +140,38 @@ def exists(folder, username):
             filename = file
             break
     if not filename:
-        return json.dumps({'exists': False})
-    return json.dumps({'exists': True})
+        resp = Response(json.dumps({'exists': False}))
+        resp.headers['Content-Type'] = 'application/json'
+        return resp
+    resp = Response(json.dumps({'exists': True}))
+    resp.headers['Content-Type'] = 'application/json'
+    return resp
+
+
+@app.route('/list-users', methods=['GET'])
+def list_users():
+    """
+    Returns the username, first and last name of all users who have a backup.
+    """
+    if not check_token(request):
+        print('Auth error')
+        return 'Auth error', 401
+    path = os.path.join(app.config['UPLOAD_FOLDER'], 'backups')
+    users = []
+    for file in os.listdir(path):
+        filename = file.split('.')[0]  # remove .pb extension
+        split = filename.split('_')
+        username = split[0]
+        firstname = split[1]
+        lastname = split[2]
+        users.append({
+            'username': username,
+            'firstname': firstname,
+            'lastname': lastname
+        })
+    resp = Response(json.dumps(users))
+    resp.headers['Content-Type'] = 'application/json'
+    return resp
 
 
 @app.route('/', methods=['GET'])
