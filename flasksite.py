@@ -3,6 +3,7 @@ import json
 import sys
 from flask import Flask, send_from_directory, request, Response
 from werkzeug.utils import secure_filename
+from time import localtime, strftime
 
 # default parameters, can be overwritten by command line arguments
 PORT = 8000
@@ -169,16 +170,21 @@ def list_users():
     path = os.path.join(app.config['UPLOAD_FOLDER'], 'backups')
     users = []
     for file in os.listdir(path):
-        if os.path.isfile(os.path.join(path, file)) and not file.startswith('.'):
+        filepath = os.path.join(path, file)
+        if os.path.isfile(filepath) and not file.startswith('.'):
             filename = file.split('.')[0]  # remove .pb extension
             split = filename.split('_')
             username = split[0]
             firstname = split[1]
             lastname = split[2]
+            last_upload = os.path.getmtime(filepath)
+            last_upload = localtime(last_upload)
+            last_upload = strftime("%Y-%m-%dT%H:%M:%S%z", last_upload)
             users.append({
                 'username': username,
                 'firstname': firstname,
-                'lastname': lastname
+                'lastname': lastname,
+                'last_upload': last_upload
             })
     resp = Response(json.dumps(users))
     resp.headers['Content-Type'] = 'application/json'
