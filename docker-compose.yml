@@ -1,0 +1,14 @@
+version: "3.4"
+
+services:
+  web:
+    restart: always
+    build: .
+    command: files=/home/appuser/PEBRAcloud_files
+    volumes:
+      - pebra_data:/home/appuser/
+    ports:
+      - "8000:8000"
+
+volumes:
+  pebra_data:

@@ -44,3 +44,14 @@ python flasksite.py files=/tmp/FILES
 
 **IMPORTANT:**
 When deploying the app, use the `run.sh` script to start the app. Running via python is not recommended for production use.
+
+### Run in Docker
+
+```bash
+# with `docker`
+docker build -t pebracloud .
+docker run --rm -v $(pwd)/PEBRAcloud_files:/PEBRAcloud_files -p 8000:8000 pebracloud files=/PEBRAcloud_files
+
+# or with `docker-compose`
+docker-compose up -d
+```

@@ -22,7 +22,7 @@ dev_mode = "dev" in sys.argv
 for arg in sys.argv:
     if arg.startswith('port='):
         PORT=int(arg[5:])
-    if arg.startswith('files='):
+    if arg.startswith('files=') and arg[6:].strip():
         UPLOAD_FOLDER=arg[6:]
 print("running in development mode" if dev_mode else "running in production mode")
 print("running on port '%s'" % PORT)
